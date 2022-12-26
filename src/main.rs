@@ -3,6 +3,7 @@ use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
+use regex::Regex;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
@@ -18,7 +19,11 @@ fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
     let request_line = buf_reader.lines().next().unwrap().unwrap();
 
-    if request_line == "GET / HTTP/1.1" {
+    let re = Regex::new(r"^(.*) (.*) (.*)$").unwrap();
+    let caps = re.captures(&request_line).unwrap();
+    let pathname = caps.get(2).map_or("", |m| m.as_str());
+
+    if pathname == "/" {
         let status_line = "HTTP/1.1 200 OK";
         let contents = fs::read_to_string("public/index.html").unwrap();
         let length = contents.len();
