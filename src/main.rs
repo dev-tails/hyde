@@ -7,7 +7,7 @@ use std::path::Path;
 use regex::Regex;
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let listener = TcpListener::bind("[::]:80").unwrap();
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
@@ -28,7 +28,7 @@ fn handle_connection(mut stream: TcpStream) {
         filename = &pathname[1..];
     }
 
-    let mut status_line = "HTTP/1.1 200 OK";
+    let mut status_line = "HTTP/1.1 404 NOT FOUND";
     let mut contents = String::new();
 
     let full_file_path = format!("{}{}{}", "public/", filename, ".html");
