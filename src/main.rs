@@ -3,6 +3,7 @@ use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
+use std::path::Path;
 use regex::Regex;
 
 fn main() {
@@ -22,18 +23,24 @@ fn handle_connection(mut stream: TcpStream) {
     let re = Regex::new(r"^(.*) (.*) (.*)$").unwrap();
     let caps = re.captures(&request_line).unwrap();
     let pathname = caps.get(2).map_or("", |m| m.as_str());
-
-    if pathname == "/" {
-        let status_line = "HTTP/1.1 200 OK";
-        let contents = fs::read_to_string("public/index.html").unwrap();
-        let length = contents.len();
-
-        let response = format!(
-            "{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}"
-        );
-
-        stream.write_all(response.as_bytes()).unwrap();
-    } else {
-        // some other request
+    let mut filename = "index";
+    if pathname != "/" {
+        filename = &pathname[1..];
     }
+
+    let mut status_line = "HTTP/1.1 200 OK";
+    let mut contents = String::new();
+
+    let full_file_path = format!("{}{}{}", "public/", filename, ".html");
+    if Path::new(&full_file_path).exists() {
+        status_line = "HTTP/1.1 200 OK";
+        contents = fs::read_to_string(&full_file_path).unwrap();
+    }
+
+    let length = contents.len();
+    let response = format!(
+        "{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}"
+    );
+
+    stream.write_all(response.as_bytes()).unwrap();
 }
